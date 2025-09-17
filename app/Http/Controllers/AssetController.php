@@ -8,15 +8,35 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Kategori;
-
+use App\Exports\AssetsExport;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Models\Dokumentasi;
 
 class AssetController extends Controller
 {
     // 1. Tampilkan semua data aset
-    public function index()
+    public function index(Request $request)
     {
-        $assets = Asset::with('user')->latest()->get();
-        return view('assets.index', compact('assets'));
+        $query = Asset::with(['dokumentasi', 'user']);
+
+        // filter kategori
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
+        }
+
+        // filter sub kategori
+        if ($request->filled('kategori_1')) {
+            $query->where('kategori_1', $request->kategori_1);
+        }
+
+        // paginate hasil query
+        $assets = $query->latest()->paginate(10);
+
+        // daftar kategori & sub kategori (distinct + buang null/kosong)
+        $kategoris = Asset::whereNotNull('kategori')->distinct()->pluck('kategori');
+        $subkategoris = Asset::whereNotNull('kategori_1')->distinct()->pluck('kategori_1');
+
+        return view('assets.index', compact('assets', 'kategoris', 'subkategoris'));
     }
 
     // 2. Form tambah aset
@@ -30,24 +50,29 @@ class AssetController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'kode_aset' => 'required|unique:assets',
-            'kategori_id' => 'required|exists:kategoris,id',
+            'kode_aset' => 'required|unique:assets,kode_aset',
+            'kategori'      => 'required|string|max:255',
+            'kategori_1' => 'nullable|string|max:255',
             'lokasi' => 'required',
             'unit_pengguna' => 'required',
             'qty_sebelum' => 'required|integer',
             'qty_sesudah' => 'required|integer',
             'kondisi' => 'required',
-            'catatan' => 'required',
+            'catatan' => 'nullable|string',
             'deskripsi' => 'required',
+            'detail_desk' => 'nullable|string',
             'dokumentasi.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
+
 
         $selisih = $request->qty_sesudah - $request->qty_sebelum;
 
         $asset = Asset::create([
-            'kode_aset' => $request->kode_aset,
+            'kode_aset' => Asset::generateKode(),
             'kategori' => $request->kategori,
+            'kategori_1' => $request->kategori_1,
             'deskripsi' => $request->deskripsi,
+            'detail_desk' => $request->detail_desk,
             'lokasi' => $request->lokasi,
             'unit_pengguna' => $request->unit_pengguna,
             'qty_sebelum' => $request->qty_sebelum,
@@ -86,12 +111,15 @@ class AssetController extends Controller
         $validated = $request->validate([
             'kode_aset' => 'required|string|max:100',
             'kategori' => 'required|string|max:100',
+            'kategori_1' => 'nullable|string|max:255',
             'deskripsi' => 'nullable|string',
+            'detail_desk' => 'nullable|string',
             'lokasi' => 'nullable|string',
             'unit_pengguna' => 'nullable|string',
             'kondisi' => 'nullable|string',
             'qty_sebelum' => 'nullable|integer',
             'qty_sesudah' => 'nullable|integer',
+            'catatan' => 'nullable|string',
             'dokumentasi.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -140,18 +168,84 @@ class AssetController extends Controller
         return redirect()->route('assets.index')->with('success', 'Aset berhasil dihapus!');
     }
 
-    public function exportPdf()
+    public function previewPdf(Request $request)
     {
-        $assets = Asset::with('dokumentasi')->get();
-        $pdf = Pdf::loadView('assets.export-pdf', compact('assets'))
-            ->setPaper('a4', 'landscape');
+        $query = Asset::query();
 
-        return $pdf->download('data-aset.pdf');
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
+        }
+        if ($request->filled('kategori_1')) {
+            $query->where('kategori_1', $request->kategori_1);
+        }
+        if ($request->filled('lokasi')) {
+            $query->where('lokasi', $request->lokasi);
+        }
+        if ($request->filled('unit_pengguna')) {
+            $query->where('unit_pengguna', $request->unit_pengguna);
+        }
+
+        $assets = $query->get()->groupBy(['kategori', 'kategori_1']);
+        // bisa juga groupBy(['lokasi']) atau ['unit_pengguna']
+
+        $pdf = Pdf::loadView('assets.print', compact('assets'))
+            ->setPaper('A4', 'landscape');
+
+        // default → preview
+        return $pdf->stream('laporan-aset.pdf');
     }
 
-    public function show($id)
+
+    // kalau export excel
+    public function exportExcel(Request $request)
     {
-        $asset = Asset::with(['dokumentasi', 'user'])->findOrFail($id);
+        return Excel::download(new AssetsExport($request), 'assets.xlsx');
+    }
+    public function show(Asset $asset)
+    {
+        $asset->load('dokumentasis'); // biar eager load
         return view('assets.show', compact('asset'));
     }
+
+    public function filter(Request $request)
+    {
+        $query = Asset::query();
+
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
+        }
+        if ($request->filled('kategori_1')) {
+            $query->where('kategori_1', $request->kategori_1);
+        }
+        if ($request->filled('lokasi')) {
+            $query->where('lokasi', $request->lokasi);
+        }
+        if ($request->filled('unit_pengguna')) {
+            $query->where('unit_pengguna', $request->unit_pengguna);
+        }
+
+        $assets = $query->paginate(10);
+
+        // ambil data unik buat dropdown "Sort by"
+        $kategoris   = Asset::select('kategori')->distinct()->pluck('kategori');
+        $subkategoris = Asset::select('kategori_1')->distinct()->pluck('kategori_1');
+        $lokasis     = Asset::select('lokasi')->distinct()->pluck('lokasi');
+        $units       = Asset::select('unit_pengguna')->distinct()->pluck('unit_pengguna');
+
+        return view('assets.filter', compact('assets', 'kategoris', 'subkategoris', 'lokasis', 'units'));
+    }
+
+    public function exportPdf($id)
+{
+    // Ambil data asset + dokumentasi
+    $asset = Asset::with('dokumentasi')->findOrFail($id);
+
+    // kirim ke view
+    $pdf = Pdf::loadView('assets.export-pdf', [
+        'asset' => $asset,
+    ]);
+
+    return $pdf->download('asset-' . $asset->id . '.pdf');
+}
+
 }

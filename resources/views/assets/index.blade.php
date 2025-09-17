@@ -30,12 +30,6 @@
             </h2>
 
             <div class="flex flex-col md:flex-row gap-3">
-                <!-- Tombol Export -->
-                <a href="{{ route('assets.export.pdf') }}"
-                    class="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition">
-                    🖨️ Export PDF
-                </a>
-
                 <!-- Form Import -->
                 <form action="{{ route('assets.import') }}" method="POST" enctype="multipart/form-data"
                     class="flex items-center space-x-2">
@@ -55,7 +49,6 @@
                 </a>
             </div>
         </div>
-
         <!-- Table -->
         <div class="overflow-x-auto animate-fadeIn">
             <table class="w-full border border-gray-200 rounded-lg overflow-hidden text-sm">
@@ -63,13 +56,16 @@
                     <tr>
                         <th class="p-3 text-left">Kode Aset</th>
                         <th class="p-3 text-left">Kategori</th>
+                        <th class="p-3 text-left">Sub Kategori</th>
                         <th class="p-3 text-left">Deskripsi</th>
+                        <th class="p-3 text-left">Detail Deskripsi</th>
                         <th class="p-3 text-left">Lokasi</th>
                         <th class="p-3 text-left">Unit Pengguna</th>
                         <th class="p-3 text-center">Qty Sebelum</th>
                         <th class="p-3 text-center">Qty Sesudah</th>
                         <th class="p-3 text-center">Selisih</th>
                         <th class="p-3 text-center">Kondisi</th>
+                        <th class="p-3 text-center">catatan</th>
                         <th class="p-3 text-center">Dokumentasi</th>
                         <th class="p-3 text-center">Input Oleh</th>
                         <th class="p-3 text-center">Aksi</th>
@@ -80,16 +76,19 @@
                     <tr class="hover:bg-blue-50 transition duration-150">
                         <td class="p-3">{{ $asset->kode_aset }}</td>
                         <td class="p-3">{{ $asset->kategori }}</td>
+                        <td class="p-3">{{ $asset->kategori_1 ?? '-' }}</td>
                         <td class="p-3">{{ $asset->deskripsi }}</td>
+                        <td class="p-3">{{ $asset->detail_desk }}</td>
                         <td class="p-3">{{ $asset->lokasi }}</td>
                         <td class="p-3">{{ $asset->unit_pengguna }}</td>
                         <td class="p-3 text-center">{{ $asset->qty_sebelum }}</td>
                         <td class="p-3 text-center">{{ $asset->qty_sesudah }}</td>
                         <td class="p-3 text-center font-semibold 
-                {{ $asset->selisih > 0 ? 'text-green-600' : ($asset->selisih < 0 ? 'text-red-600' : 'text-gray-600') }}">
+                        {{ $asset->selisih > 0 ? 'text-green-600' : ($asset->selisih < 0 ? 'text-red-600' : 'text-gray-600') }}">
                             {{ $asset->selisih }}
                         </td>
                         <td class="p-3 text-center">{{ $asset->kondisi }}</td>
+                        <td class="p-3 text-center">{{ $asset->catatan ?? '-' }}</td>
 
                         {{-- 📸 Kolom Dokumentasi Foto --}}
                         <td>
@@ -99,7 +98,6 @@
                             <span>-</span>
                             @endforelse
                         </td>
-
                         <td class="p-3 text-center">{{ $asset->user->name }}</td>
                         <td class="p-3 flex justify-center gap-3">
                             <a href="{{ route('assets.show', $asset->id) }}"
@@ -124,6 +122,10 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        <!-- Pagination -->
+        <div class="mt-4">
+            {{ $assets->links('vendor.pagination.tailwind') }}
         </div>
     </div>
 </x-app-layout>

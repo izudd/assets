@@ -22,17 +22,19 @@ class AssetImportExportController extends Controller
 
         Asset::with('user')->get()->each(function ($asset) use ($writer) {
             $writer->addRow([
-                'Kode Aset'     => $asset->kode_aset,
-                'Kategori'      => $asset->kategori,
-                'Deskripsi'     => $asset->deskripsi,
-                'Lokasi'        => $asset->lokasi,
-                'Unit Pengguna' => $asset->unit_pengguna,
-                'qty Sebelum'   => $asset->qty_sebelum,
-                'qty Sesudah'   => $asset->qty_sesudah,
-                'Selisih'       => $asset->selisih,
-                'Kondisi'       => $asset->kondisi,
-                'Catatan'       => $asset->catatan,
-                'Dibuat Oleh'   => optional($asset->user)->name,
+                'kode_aset'     => $asset->kode_aset,
+                'kategori'      => $asset->kategori,
+                'kategori_1'    => $asset->kategori_1,
+                'deskripsi'     => $asset->deskripsi,
+                'detail_desk'   => $asset->detail_desk,
+                'lokasi'        => $asset->lokasi,
+                'unit_pengguna' => $asset->unit_pengguna,
+                'qty_sebelum'   => $asset->qty_sebelum,
+                'qty_sesudah'   => $asset->qty_sesudah,
+                'selisih'       => $asset->selisih,
+                'kondisi'       => $asset->kondisi,
+                'catatan'       => $asset->catatan,
+                'dibuat_oleh'   => optional($asset->user)->name,
             ]);
         });
 
@@ -41,41 +43,42 @@ class AssetImportExportController extends Controller
 
     // Import data aset dari Excel
     public function import(Request $request)
-{
-    $request->validate([
-        'file' => 'required|mimes:xlsx,csv|max:2048',
-    ]);
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,csv|max:2048',
+        ]);
 
-    $file = $request->file('file');
-    $filename = time() . '-' . $file->getClientOriginalName();
-    $path = $file->storeAs('imports', $filename);
-    $fullPath = Storage::path($path);
+        $file = $request->file('file');
+        $filename = time() . '-' . $file->getClientOriginalName();
+        $path = $file->storeAs('imports', $filename);
+        $fullPath = Storage::path($path);
 
-    $rows = SimpleExcelReader::create($fullPath)->getRows();
+        $rows = SimpleExcelReader::create($fullPath)->getRows();
 
-    foreach ($rows as $row) {
-        $qtySebelum = (int) ($row['qty_sebelum'] ?? 0);
-        $qtySesudah = (int) ($row['qty_sesudah'] ?? 0);
-        $selisih = $qtySesudah - $qtySebelum;
+        foreach ($rows as $row) {
+            $qtySebelum = (int) ($row['qty_sebelum'] ?? 0);
+            $qtySesudah = (int) ($row['qty_sesudah'] ?? 0);
+            $selisih = $qtySesudah - $qtySebelum;
 
-        Asset::updateOrCreate(
-            ['kode_aset' => $row['kode_aset'] ?? null],
-            [
-                'kategori' => $row['kategori'] ?? null,
-                'deskripsi' => $row['deskripsi'] ?? null,
-                'lokasi' => $row['lokasi'] ?? null,
-                'unit_pengguna' => $row['unit_pengguna'] ?? null,
-                'qty_sebelum' => $qtySebelum,
-                'qty_sesudah' => $qtySesudah,
-                'selisih' => $selisih,
-                'kondisi' => $row['kondisi'] ?? null,
-                'catatan' => $row['catatan'] ?? null,
-                'user_id' => Auth::id(),
-            ]
-        );
+            Asset::updateOrCreate(
+                ['kode_aset' => $row['kode_aset'] ?? null],
+                [
+                    'kategori' => $row['kategori'] ?? null,
+                    'kategori_1' => $row['kategori_1'] ?? null,
+                    'deskripsi' => $row['deskripsi'] ?? null,
+                    'lokasi' => $row['lokasi'] ?? null,
+                    'unit_pengguna' => $row['unit_pengguna'] ?? null,
+                    'qty_sebelum' => $qtySebelum,
+                    'qty_sesudah' => $qtySesudah,
+                    'selisih' => $selisih,
+                    'kondisi' => $row['kondisi'] ?? null,
+                    'catatan' => $row['catatan'] ?? null,
+                    'user_id' => Auth::id(),
+                ]
+            );
+        }
+
+        Storage::delete($path);
+        return redirect()->route('assets.index')->with('success', '✅ Data aset berhasil diimport!');
     }
-
-    Storage::delete($path);
-    return redirect()->route('assets.index')->with('success', '✅ Data aset berhasil diimport!');
-}
 }

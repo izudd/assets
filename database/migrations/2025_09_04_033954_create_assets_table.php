@@ -21,7 +21,7 @@ return new class extends Migration
         $table->integer('qty_sebelum')->default(0);
         $table->integer('qty_sesudah')->default(0);
         $table->integer('selisih')->default(0);
-        $table->enum('kondisi', ['Baik','Rusak','Hilang','Tidak Ditemukan']);
+        $table->enum('kondisi', ['Baik','Rusak Ringan','Rusak Berat','Tidak Ditemukan']);
         $table->text('catatan')->nullable();
         $table->string('dokumentasi')->nullable();
         $table->foreignId('user_id')->constrained()->onDelete('cascade');
