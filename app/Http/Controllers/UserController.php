@@ -103,4 +103,13 @@ class UserController extends Controller
 
         return redirect()->route('users.index')->with('success', 'User berhasil diaktifkan.');
     }
+
+    public function toggleStatus($id)
+    {
+        $user = User::findOrFail($id);
+        $user->is_active = !$user->is_active;
+        $user->save();
+
+        return redirect()->back()->with('success', 'Status user berhasil diperbarui!');
+    }
 }

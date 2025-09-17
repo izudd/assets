@@ -78,21 +78,20 @@
                     <td>{{ $row->kondisi }}</td>
                     <td>{{ $row->catatan }}</td>
                     <td>
-                        @if($row->dokumentasi && $row->dokumentasi->count())
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3">
-                            @foreach ($asset->dokumentasis as $doc)
-                            <div class="border rounded-lg p-2 shadow hover:shadow-md transition">
-                                <img src="{{ asset('storage/' . $doc->file_path) }}"
-                                    alt="Dokumentasi {{ $asset->kode_aset }}"
-                                    class="rounded-lg max-h-48 mx-auto">
-                                <p class="text-sm text-center mt-2 text-gray-600">{{ $doc->keterangan }}</p>
-                            </div>
-                            @endforeach
-                        </div>
-                        @else
-                        <p class="text-gray-500 italic mt-2">Tidak ada dokumentasi tersedia.</p>
-                        @endif
-                    </td>
+                                @if($row->dokumentasis && $row->dokumentasis->count())
+                                <div class="doc-container">
+                                    @foreach($row->dokumentasis as $doc)
+                                    <div class="doc-item">
+                                        <img src="{{ public_path('storage/' . $doc->file_path) }}"
+                                             alt="Dokumentasi {{ $row->kode_aset }}">
+                                        <p>{{ $doc->keterangan }}</p>
+                                    </div>
+                                    @endforeach
+                                </div>
+                                @else
+                                <p style="font-style:italic;">Tidak ada dokumentasi.</p>
+                                @endif
+                            </td>
                 </tr>
                 @endforeach
             </tbody>

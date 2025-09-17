@@ -92,11 +92,14 @@
 
                         {{-- 📸 Kolom Dokumentasi Foto --}}
                         <td>
-                            @forelse($asset->dokumentasi ?? [] as $doc)
-                            <img src="{{ asset('storage/'.$doc->file_path) }}" width="60" class="mr-1" alt="Foto">
-                            @empty
-                            <span>-</span>
-                            @endforelse
+                            @foreach ($asset->dokumentasis as $doc)
+                            <div class="border rounded-lg p-2 shadow hover:shadow-md transition">
+                                <img src="{{ asset('storage/' . $doc->file_path) }}"
+                                    alt="Dokumentasi {{ $asset->kode_aset }}"
+                                    class="rounded-lg max-h-48 mx-auto">
+                                <p class="text-sm text-center mt-2 text-gray-600">{{ $doc->keterangan }}</p>
+                            </div>
+                            @endforeach
                         </td>
                         <td class="p-3 text-center">{{ $asset->user->name }}</td>
                         <td class="p-3 flex justify-center gap-3">

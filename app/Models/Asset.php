@@ -64,9 +64,9 @@ class Asset extends Model
     // app/Models/Asset.php
 
     public function dokumentasi()
-{
-    return $this->hasMany(Dokumentasi::class, 'asset_id');
-}
+    {
+        return $this->hasMany(Dokumentasi::class, 'asset_id');
+    }
 
 
 
@@ -84,13 +84,19 @@ class Asset extends Model
 
     // App/Models/Asset.php
     public function kategori()
-{
-    return $this->belongsTo(Kategori::class, 'kategori_id');
-}
+    {
+        return $this->belongsTo(Kategori::class, 'kategori_id');
+    }
 
 
     public function unit()
     {
         return $this->belongsTo(Unit::class, 'unit_id');
+    }
+
+    // App/Models/Asset.php
+    public function verifikator()
+    {
+        return $this->belongsTo(Verifikator::class);
     }
 }

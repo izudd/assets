@@ -148,7 +148,7 @@ class AssetController extends Controller
                 $path = $file->store('dokumentasi', 'public');
                 $asset->dokumentasi()->create([
                     'file_path' => $path,
-                    'keterangan' => 'Foto tambahan'
+                    'keterangan' => 'Foto Tambahan'
                 ]);
             }
         }
@@ -237,15 +237,18 @@ class AssetController extends Controller
 
     public function exportPdf($id)
 {
+
+    
     // Ambil data asset + dokumentasi
-    $asset = Asset::with('dokumentasi')->findOrFail($id);
+     $assets = Asset::with('dokumentasis')
+    ->get()
+    ->groupBy(['kategori', 'subkategori']); // jadikan nested array
+    
 
     // kirim ke view
-    $pdf = Pdf::loadView('assets.export-pdf', [
-        'asset' => $asset,
-    ]);
-
-    return $pdf->download('asset-' . $asset->id . '.pdf');
+    $pdf = Pdf::loadView('assets.export-pdf', compact('assets'))
+        ->setPaper('A4', 'landscape');
+    return $pdf->download('laporan-aset.pdf');
 }
 
 }

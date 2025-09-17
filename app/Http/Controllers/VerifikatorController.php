@@ -21,6 +21,7 @@ class VerifikatorController extends Controller
             'email' => 'required|email|unique:verifikators,email',
         ]);
 
+        
         Verifikator::create($validated);
 
         return redirect()->route('dashboard')->with('success', 'Data berhasil disimpan, selamat datang!');

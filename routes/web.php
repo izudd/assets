@@ -36,9 +36,10 @@ Route::middleware('auth')->group(function () {
 // ASSET MANAGEMENT
 // ===================
 
-Route::get('/assets/{id}/export-pdf', [AssetController::class, 'exportPdf'])->name('assets.exportPdf');
+Route::get('/assets/{id}/export-pdf', [AssetController::class, 'exportPdf'])->name('assets.export-pdf');
 Route::get('/assets/preview-pdf', [AssetController::class, 'previewPdf'])->name('assets.preview-pdf');
 Route::get('/assets/export-excel', [AssetController::class, 'exportExcel'])->name('assets.export-excel');
+Route::post('/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggleStatus');
 
 
 // superadmin & admin bisa kelola asset
